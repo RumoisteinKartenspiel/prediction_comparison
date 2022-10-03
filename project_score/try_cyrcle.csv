@@ -1,0 +1,8 @@
+score,max,min
+RMSD_Pymol,1,0
+RMSD_USAlign,1,0
+TM-score,1,0
+RAMA-Z,1,-5
+MolProbity,1,-5
+GDT_TS,1,-5
+QCS,1,-5

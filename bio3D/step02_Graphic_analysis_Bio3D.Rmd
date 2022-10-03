@@ -1,0 +1,249 @@
+---
+title: "US_align_report_TMscore"
+output: html_notebook
+---
+
+## Reading in data from csv files
+
+```{r warning=FALSE, paged.print=TRUE}
+setwd("C:/Users/noahh/OneDrive - Uppsala universitet/Erasmus Oslo/01_Project/04_Data/Bio3d_RMSD/")
+
+#Formatting the tables an reading in the csv
+file_names<- list.files(,pattern=".csv")
+names_col <- c("rmsd_paired_chain_name","rmsd_crystal_vs_ABB","rmsd_crystal_vs_IgFold","rmsd_crystal_vs_AF2", "rmsd_ABB_vs_IgFold","rmsd_ABB_vs_AF2","rmsd_IgFold_vs_AF2")
+
+H_chain <- read.csv(file_names[1], col.names = names_col)
+L_chain <- read.csv(file_names[2], col.names = names_col)
+Paired_chain <- read.csv(file_names[3], col.names = names_col)
+
+type <-  c("crystal_ABB","crystal_IgFold","crystal_AF2", "ABB_IgFold","ABB_AF2","AF2_IgFold")
+#adds classifier for boxplot
+for (t in type){
+  H_chain[t] <- rep(t, times=nrow(H_chain))
+}
+for (t in type){
+  L_chain[t] <- rep(t, times=nrow(L_chain))
+}
+for (t in type){
+  Paired_chain[t] <- rep(t, times=nrow(Paired_chain))
+}
+
+remove(file_names,names_col,type,t)
+```
+***
+
+***
+```{r warning=FALSE}
+# Package names
+packages <- c("ggplot2", "plyr","dplyr", "ggsignif")# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}# Packages loading
+invisible(lapply(packages, library, character.only = TRUE))
+
+
+```
+
+```{r}
+
+
+df_k <- data.frame(matrix(ncol = 3, nrow = 0))
+colnames(df_k) <- c("PDBchain", "RMSD", "classifier")
+df_f <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(df_k) <- c("PDBchain", "RMSD", "classifier")
+
+input =H_chain
+
+for (i in 0:5){
+  rmsd = 2+i
+  classifier =8+i
+  df_k[1:nrow(input),c(1,2,3)] <- input[,c(1,rmsd,classifier)]
+  df_f <- rbind(df_f, df_k)
+}
+
+boxplot_H_chain <- df_f
+#remove(classifier, i, rmsd, t, tm, type, df_f, df_k, input, list_input )
+
+#calculates mean, meadian and sd
+summ_RMSD_H <- boxplot_H_chain %>% 
+  group_by(classifier) %>% 
+  summarize(mean = mean(RMSD), median = median(RMSD), sd = sd(RMSD))
+# colors
+type2 <-  c("crystal_ABB","crystal_AF2","crystal_IgFold", "ABB_AF2","ABB_IgFold","AF2_IgFold") 
+pers_color <- c("#A6CEE3","#92D3FF","#1F78B4", "#FB9A99", "#E31A1C", "#B2DF8A", "#33A02C", "#FDBF6F", "#FF7F00")
+boxplot_H_chain$classifier <- factor(boxplot_H_chain$classifier, levels = type2)
+```
+
+
+
+# Making heavy chain RMSD plots
+## Violinplot heavy chain RMSD
+
+```{r}
+
+RMSD_plot <- function(boxplot_X_chain, chain_name_for_file, summ_RMSD_X, plot_type) {
+  title_name <- paste("Plot of", chain_name_for_file, "chain prediction RMSD-score")
+plot1 <- ggplot(boxplot_X_chain, aes(x = classifier, y = RMSD)) +
+  theme_minimal()+
+  scale_fill_manual(values = pers_color)+
+  plot_type(aes(fill = classifier), lwd=0.4)+
+  labs(title= title_name ,x="Comparison between", y = "RMSD-score (higher = worse)")+
+  theme(axis.text.x = element_text(size=7, angle=45, margin=margin(t=4), hjust = 1),
+        axis.text.y = element_text(size=7))+ theme(legend.title=element_blank()) +
+  stat_summary(aes(x=classifier,y = RMSD),
+               fun = "mean",
+               col = "black",
+               size = 0.5,
+               width=0.3,
+               geom="errorbar",
+               fun.max = function(x) mean(x) + sd(x),
+               fun.min = function(x) mean(x) - sd(x)) +
+  stat_summary(aes(x=classifier,y = RMSD),
+               fun = "mean", geom = "point", size=2, shape=15) +
+   geom_label(data = summ_RMSD_X, aes(x = classifier, y = -0.5, label = paste("Mean: ", round(mean, 3), "\nMedian: ",round(median, 3), "\nSD: ", round(sd, 3))), size = 2, label.size = 0, label.padding = unit(0.1, "lines")) + #Adds labels
+geom_signif(aes(x=classifier, y = RMSD), comparisons = list(c("crystal_AF2", "crystal_IgFold"),
+                                                            c("crystal_ABB", "crystal_IgFold"),
+                                                            c("crystal_ABB", "crystal_AF2")),
+                                                            map_signif_level = TRUE, y_position = c(20,21.5,20))
+return(plot1)
+}
+plot1<- RMSD_plot(boxplot_H_chain, "heavy", summ_RMSD_H, geom_boxplot)
+plot1
+
+ggsave("Boxplot of Heavy Chain prediction RMSD-score Bio3D.jpeg", width = 2500, height = 1500, units = "px")
+```
+
+
+# Violinplot 
+```{r}
+plot2<- RMSD_plot(boxplot_H_chain, "heavy", summ_RMSD_H, geom_violin)
+plot2
+ggsave("Violinplot of Heavy Chain prediction RMSD-score Bio3D.jpeg", width = 2500, height = 1500, units = "px")
+
+```
+
+# Light chain
+
+```{r}
+
+df_k <- data.frame(matrix(ncol = 3, nrow = 0))
+colnames(df_k) <- c("PDBchain", "RMSD", "classifier")
+df_f <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(df_k) <- c("PDBchain", "RMSD", "classifier")
+
+input =L_chain
+
+for (i in 0:5){
+  rmsd = 2+i
+  classifier =8+i
+  df_k[1:nrow(input),c(1,2,3)] <- input[,c(1,rmsd,classifier)]
+  df_f <- rbind(df_f, df_k)
+}
+
+boxplot_L_chain <- df_f
+#remove(classifier, i, rmsd, t, tm, type, df_f, df_k, input, list_input )
+
+#calculates mean, meadian and sd
+summ_RMSD_L <- boxplot_L_chain %>% 
+  group_by(classifier) %>% 
+  summarize(mean = mean(RMSD), median = median(RMSD), sd = sd(RMSD))
+# colors
+type2 <-  c("crystal_ABB","crystal_AF2","crystal_IgFold", "ABB_AF2","ABB_IgFold","AF2_IgFold") 
+pers_color <- c("#A6CEE3","#92D3FF","#1F78B4", "#FB9A99", "#E31A1C", "#B2DF8A", "#33A02C", "#FDBF6F", "#FF7F00")
+boxplot_L_chain$classifier <- factor(boxplot_L_chain$classifier, levels = type2)
+```
+
+#Boxplot light chain
+```{r}
+plot3<- RMSD_plot(boxplot_L_chain, "light", summ_RMSD_L, geom_boxplot)
+plot3
+
+ggsave("Boxplot of Light Chain prediction RMSD-score Bio3D.jpeg", width = 2500, height = 1500, units = "px")
+
+```
+
+
+# Violinplot light chain
+```{r}
+plot4<- RMSD_plot(boxplot_L_chain, "ligth", summ_RMSD_L, geom_violin)
+plot4
+ggsave("Violinplot of Light Chain prediction RMSD-score Bio3D.jpeg", width = 2500, height = 1500, units = "px")
+
+```
+
+# Paired chain
+```{r}
+
+df_k <- data.frame(matrix(ncol = 3, nrow = 0))
+colnames(df_k) <- c("PDBchain", "RMSD", "classifier")
+df_f <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(df_k) <- c("PDBchain", "RMSD", "classifier")
+
+input =Paired_chain
+
+for (i in 0:5){
+  rmsd = 2+i
+  classifier =8+i
+  df_k[1:nrow(input),c(1,2,3)] <- input[,c(1,rmsd,classifier)]
+  df_f <- rbind(df_f, df_k)
+}
+
+boxplot_Paired_chain <- df_f
+#remove(classifier, i, rmsd, t, tm, type, df_f, df_k, input, list_input )
+
+#calculates mean, meadian and sd
+summ_RMSD_Paired <- boxplot_Paired_chain %>% 
+  group_by(classifier) %>% 
+  summarize(mean = mean(RMSD), median = median(RMSD), sd = sd(RMSD))
+# colors
+type2 <-  c("crystal_ABB","crystal_AF2","crystal_IgFold", "ABB_AF2","ABB_IgFold","AF2_IgFold") 
+pers_color <- c("#A6CEE3","#92D3FF","#1F78B4", "#FB9A99", "#E31A1C", "#B2DF8A", "#33A02C", "#FDBF6F", "#FF7F00")
+boxplot_Paired_chain$classifier <- factor(boxplot_Paired_chain$classifier, levels = type2)
+```
+
+#Boxplot paired chain
+```{r}
+RMSD_plot <- function(boxplot_X_chain, chain_name_for_file, summ_RMSD_X, plot_type) {
+  title_name <- paste("Plot of", chain_name_for_file, "chain prediction RMSD-score")
+plot1 <- ggplot(boxplot_X_chain, aes(x = classifier, y = RMSD)) +
+  theme_minimal()+
+  scale_fill_manual(values = pers_color)+
+  plot_type(aes(fill = classifier), lwd=0.4)+
+  labs(title= title_name ,x="Comparison between", y = "RMSD-score (higher = worse)")+
+  theme(axis.text.x = element_text(size=7, angle=45, margin=margin(t=4), hjust = 1),
+        axis.text.y = element_text(size=7))+ theme(legend.title=element_blank()) +
+  stat_summary(aes(x=classifier,y = RMSD),
+               fun = "mean",
+               col = "black",
+               size = 0.5,
+               width=0.3,
+               geom="errorbar",
+               fun.max = function(x) mean(x) + sd(x),
+               fun.min = function(x) mean(x) - sd(x)) +
+  stat_summary(aes(x=classifier,y = RMSD),
+               fun = "mean", geom = "point", size=2, shape=15) +
+   geom_label(data = summ_RMSD_X, aes(x = classifier, y = -0.5, label = paste("Mean: ", round(mean, 3), "\nMedian: ",round(median, 3), "\nSD: ", round(sd, 3))), size = 2, label.size = 0, label.padding = unit(0.1, "lines")) + #Adds labels
+geom_signif(aes(x=classifier, y = RMSD), comparisons = list(c("crystal_AF2", "crystal_IgFold"),
+                                                            c("crystal_ABB", "crystal_IgFold"),
+                                                            c("crystal_ABB", "crystal_AF2")),
+                                                            map_signif_level = TRUE, y_position = c(27,29,27))
+return(plot1)
+}
+plot3<- RMSD_plot(boxplot_Paired_chain, "paired", summ_RMSD_Paired, geom_boxplot)
+plot3
+
+ggsave("Boxplot of Paired Chain prediction RMSD-score Bio3D.jpeg", width = 2500, height = 1500, units = "px")
+
+```
+
+
+# Violinplot paired chain
+```{r}
+plot4<- RMSD_plot(boxplot_Paired_chain, "ligth", summ_RMSD_Paired, geom_violin)
+plot4
+
+ggsave("Violinplot of Paired Chain prediction RMSD-score Bio3D.jpeg", width = 2500, height = 1500, units = "px")
+
+```
+

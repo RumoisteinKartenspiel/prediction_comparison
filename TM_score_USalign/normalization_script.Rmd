@@ -1,0 +1,81 @@
+---
+title: "Normalization"
+output: html_notebook
+---
+
+
+
+######################
+
+
+Unfinished
+
+
+
+
+
+#######################
+```{r}
+# Package names
+packages <- c("ggplot2", "plyr","dplyr", "ggsignif")# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}# Packages loading
+invisible(lapply(packages, library, character.only = TRUE))
+```
+
+## Reading in data from csv files
+
+```{r warning=FALSE, paged.print=TRUE}
+setwd("C:/Users/noahh/OneDrive - Uppsala universitet/Erasmus Oslo/01_Project/04_Data/TM_score_USalign_RMSD/result_data/")
+
+#Formatting the tables and reading in the csv
+file_names<- list.files(,pattern=".csv")
+list_of_tables <- list()
+k=1
+for (name in file_names) {
+  
+  name_table <- read.csv(name, header =T)
+  list_of_tables[[k]] <- name_table
+  k=1+k
+  }
+names(list_of_tables) <- file_names
+remove(name_table,names_col,name,k, file_names)
+```
+***
+## Normalizing data_H_chain (mean = 0, one sd = 1)
+```{r}
+
+
+data_chain <- data.frame(list_of_tables$data_H_chain_USalign.csv)
+summ_RMSD <- data.frame(list_of_tables$summ_RMSD_H_USalign.csv)
+summ_TM <- data.frame(list_of_tables$summ_TM_H_USalign.csv)
+
+#calculates the number of entires for each classifier, normally all the same number since derived from inner_join, a=rownumber
+i=1
+a <- data_chain %>%
+   count(classifier)
+a <- x$n[i]
+summ_RMSD <- summ_RMSD[2:7,]
+mean_RMSD <- sum(summ_RMSD$mean)/nrow(summ_RMSD)
+mean_RMSD_sd <- sum(summ_RMSD$sd)/nrow(summ_RMSD)
+x <- summ_RMSD$classifier[i]
+y <- summ_RMSD$mean[i]
+
+for (i in 1:6){
+  a <- data_chain %>%
+   count(classifier)
+  a <- a$n[i]
+
+  x <- summ_RMSD$classifier[i]
+  y <- summ_RMSD$mean[i]
+  # apply(x, margin, func)
+  A <- function(entry){ entry / y }
+  
+apply(data_chain[c('RMSD')],1, A )
+}
+
+
+```
+

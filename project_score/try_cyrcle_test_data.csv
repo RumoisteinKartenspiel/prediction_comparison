@@ -1,0 +1,8 @@
+score,factorized,real,factor,normalization
+RMSD_Pymol,0.4,12,0.4,real/max
+RMSD_USAlign,0.166666667,5,0.166666667,real/max
+TM-score,0.321,0.321,0.321,real/max
+RAMA-Z,0.7356,3.678,0.7356,real/max
+MolProbity,0.46,2.3,0.46,real/max
+GDT_TS,0.22,1.1,0.22,real/max
+QCS,0.0246,0.123,0.0246,real/max

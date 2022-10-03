@@ -1,0 +1,1 @@
+$(pwd)/muscle5.1.linux_intel64 -align fasta_paired_.fa -output fasta_paired_alignment.afa

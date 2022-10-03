@@ -1,0 +1,15 @@
+#How to install voronata
+
+git clone https://github.com/kliment-olechnovic/voronota.git
+
+cd voronata
+gunzip -d voronota_1.23.3493.tar.gz
+tar -xf voronota_1.23.3493.tar
+cd voronota_1.23.3493
+#when using immunohub use: ./configure --prefix=/doctorai/noahho/per_conda/CAD_score/voronata/ instead of ./configure make
+./configure --prefix=/doctorai/noahho/per_conda/CAD_score/voronata/
+make
+#make install
+
+#Test
+./voronota-cadscore -t /doctorai/noaheh/per_conda/Pymol/data/crystal/H/12E8.pdb -m /doctorai/noaheh/per_conda/Pymol/data/IgFold/H/12E8.pdb

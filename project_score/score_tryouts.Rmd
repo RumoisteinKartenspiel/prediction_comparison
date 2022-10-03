@@ -1,0 +1,133 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Was will ich? 
+Ich will ein chart wie https://r-graph-gallery.com/web-circular-barplot-with-R-and-ggplot2.html hier beschrieben um eine pdb structur zu bewerten. 
+- Kriterien:
+    1. RMSD (Pymol)
+    2. RMSD (USalign)
+    3. TM-score
+    4. Rama-Z score
+    5. MolProbitiy(chemical eval including clash,rotamer,rama favored components)
+    6. GDT_TS
+    7. QCS
+    
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+```
+
+```{r}
+type2 <-  c("crystal_ABB", "crystal_AF2", "crystal_IgFold","ABB_AF2", "ABB_IgFold","AF2_IgFold", "AF2_ABB", "IgFold_ABB","IgFold_AF2") 
+pers_color <- c("#A6CEE3","#92D3FF","#1F78B4", "#FB9A99", "#E31A1C", "#B2DF8A", "#33A02C", "#FDBF6F", "#FF7F00")
+boxplot_H_chain$classifier <- factor(boxplot_H_chain$classifier, levels = type2)
+
+plt <- ggplot(boxplot_H_chain) +
+  # Make custom panel grid
+  geom_hline(
+    aes(yintercept = y), 
+    data.frame(y = c(0:3)),
+    color = "lightgrey"
+  ) +
+  
+# Add bars to represent the cumulative track lengths
+  # str_wrap(region, 5) wraps the text so each line has at most 5 characters
+  # (but it doesn't break long words!)
+  geom_col(
+    aes(
+      y = TM_score,
+      x = as.numeric(classifier)
+    ),
+    position = "dodge2",
+    show.legend = TRUE,
+    alpha = .9
+  ) +  coord_polar()
+  
+  plt# Add dots to represent the mean gain
+  geom_point(
+    aes(
+      x = reorder(str_wrap(region, 5),sum_length),
+      y = mean_gain
+    ),
+    size = 3,
+    color = "gray12"
+  ) + 
+  
+  # Lollipop shaft for mean gain per region
+  geom_segment(
+    aes(
+      x = reorder(str_wrap(region, 5), sum_length),
+      y = 0,
+      xend = reorder(str_wrap(region, 5), sum_length),
+      yend = 3000
+    ),
+    linetype = "dashed",
+    color = "gray12"
+  ) 
+  
+  # Make it circular!
+ 
+
+plt
+```
+```{r}
+
+plot1 <- ggplot(boxplot_H_chain)+
+  geom_col(aes(x = classifier, y = TM_score, fill = as.numeric(classifier))) +
+
+
+  labs(title= "tryout" ,x="Comparison between", y = "TM-score (higher = better)")+
+  theme(axis.text.x = element_text(size=7, angle=45, margin=margin(t=4), hjust = 1),
+        axis.text.y = element_text(size=7))+ theme(legend.title=element_blank()) +
+  stat_summary(aes(x=classifier, y = TM_score),
+               fun = "mean",
+               col = "black",
+               size = 0.5,
+               width = 0.3,
+               geom="errorbar",
+               fun.max = function(x) mean(x) + sd(x),
+               fun.min = function(x) mean(x) - sd(x)) +
+  stat_summary(aes(x=classifier,y = TM_score),
+               fun = "mean", geom = "point", size=2, shape=15) +
+    coord_polar()
+
+plot1
+```
+
+```{r}
+
+setwd("C:/Users/noahh/Downloads/")
+
+tryout <- read.csv("try_cyrcle.csv")
+  
+plot_1 <- ggplot(tryout)+
+  geom_col(aes(x = score, y = max))  
+plot_2 <- plot_1 +  geom_col(aes(x = score, y = min)) + coord_polar()
+plot_2    
+
+
+```
+
+# Normalized to have an even cake
+
+```{r}
+
+setwd("C:\\Users\\noahh\\OneDrive - Uppsala universitet\\Erasmus Oslo\\01_Project\\05_Code\\project_score")
+
+tryout1 <- read.csv("try_cyrcle.csv")
+
+
+plot_1 <- ggplot(tryout1) +
+  geom_col(data=tryout1,aes(x = score, y = (max))) +
+  coord_polar()
+
+plot_1
+
+tryout_test <- read.csv("try_cyrcle_test_data.csv")
+
+plot_2 <- plot_1 + geom_col(data=tryout_test, aes(x = score, y = factorized, fill = score))
+plot_2
+```

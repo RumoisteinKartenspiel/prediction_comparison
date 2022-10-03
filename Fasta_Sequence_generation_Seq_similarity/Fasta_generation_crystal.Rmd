@@ -1,0 +1,56 @@
+---
+title: "US_align_report_TMscore"
+output: html_notebook
+---
+
+## Reading in data from csv files
+
+```{r warning=FALSE, paged.print=TRUE}
+setwd("C:/Users/noahh/OneDrive - Uppsala universitet/Erasmus Oslo/01_Project/03_Raw_data/crystal/H/")
+
+#Formatting the tables an reading in the csv
+file_names<- list.files(,pattern="pdb")
+
+
+```
+***
+***
+```{r warning=FALSE}
+# Package names
+packages <- c("ggplot2", "plyr","dplyr", "ggsignif", "bio3d")# Install packages not yet installed
+installed_packages <- packages %in% rownames(installed.packages())
+if (any(installed_packages == FALSE)) {
+  install.packages(packages[!installed_packages])
+}# Packages loading
+invisible(lapply(packages, library, character.only = TRUE))
+
+
+```
+
+```{r}
+setwd("C:/Users/noahh/OneDrive - Uppsala universitet/Erasmus Oslo/01_Project/03_Raw_data/")
+
+chain_list = c("H","L","paired")
+for (chain in chain_list)
+for (name in file_names) {
+  
+  crystal_file_name <- paste("crystal/",chain,"/", name, sep="")
+  pdb<- read.pdb(crystal_file_name) 
+  
+                  # SEQRES
+a <- aa321(pdb$atom[pdb$calpha,"resid"]) # ATOM
+
+## Write simple fasta file
+
+name_of_file <- paste("fasta",chain, ".fa",sep="_")
+
+outfile1 = file.path(getwd(), name_of_file)
+
+write.fasta( ids=substr(name,1,4),seqs=a, file=outfile1,append=TRUE)
+  
+  
+ }
+```
+
+
+
